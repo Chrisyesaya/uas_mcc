@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "371111848824",
+    "firebase_url": "https://uas-mcc-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "uas-mcc",
+    "storage_bucket": "uas-mcc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371111848824:android:732555eaef1c883118f68d",
+        "android_client_info": {
+          "package_name": "com.example.uas_mcc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "371111848824-jbo16kde9h62k8d36utas2ops6bttv9k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzZeKuZ6NozpJofLFtNu9DJ9N1dEDRx8g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "371111848824-jbo16kde9h62k8d36utas2ops6bttv9k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "371111848824-566e72abpo3mqq4r8nlnjsc35q0n7upg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.uasMcc"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
