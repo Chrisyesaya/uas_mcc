@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uas_mcc/services/auth_service.dart';
 import 'package:uas_mcc/services/firestore_service.dart';
+import 'package:uas_mcc/services/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -43,8 +43,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           FutureBuilder(
             future: db.getMembership(user?.uid ?? ''),
             builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting)
+              if (snap.connectionState == ConnectionState.waiting) {
                 return const CircularProgressIndicator();
+              }
               final doc = snap.data;
               if (doc == null) return const Text('No membership');
               final data = (doc as dynamic).data() as Map<String, dynamic>?;

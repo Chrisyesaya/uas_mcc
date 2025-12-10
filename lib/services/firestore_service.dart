@@ -67,6 +67,25 @@ class FirestoreService {
       'status': 'cancelled',
     });
   }
+
+  // Save account data to "accounts" parent collection
+  Future<void> saveAccountData({
+    required String uid,
+    required String email,
+    required String nama,
+    required String jenisKelamin,
+    required String tanggalLahir,
+    required String alamat,
+  }) async {
+    await _db.collection('accounts').doc(uid).set({
+      'email': email,
+      'nama': nama,
+      'jenisKelamin': jenisKelamin,
+      'tanggalLahir': tanggalLahir,
+      'alamat': alamat,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
 }
 
 class AppUser {

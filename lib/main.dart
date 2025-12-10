@@ -1,13 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// ThemeProvider moved into AuthService file to reduce folder count
 import 'package:uas_mcc/services/auth_service.dart';
 import 'package:uas_mcc/services/firestore_service.dart';
-import 'package:uas_mcc/screens/login_screen.dart';
+import 'package:uas_mcc/services/theme_provider.dart';
+import 'package:uas_mcc/screens/login.dart';
 // screen imports are loaded lazily by routers/screens when needed
-import 'package:uas_mcc/screens/user_home_screen.dart';
-import 'package:uas_mcc/screens/admin_dashboard_screen.dart';
+import 'package:uas_mcc/screens/user_home.dart';
+import 'package:uas_mcc/screens/admin_dashboard.dart';
 // profile screen imported where used
 import 'firebase_options.dart';
 

@@ -1,3 +1,4 @@
+// Renamed from admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -74,10 +75,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       child: StreamBuilder<QuerySnapshot>(
                         stream: db.plansStream(),
                         builder: (context, snap) {
-                          if (!snap.hasData)
+                          if (!snap.hasData) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );
+                          }
                           final docs = snap.data!.docs;
                           return ListView.builder(
                             itemCount: docs.length,
@@ -114,8 +116,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: StreamBuilder<QuerySnapshot>(
                 stream: db.usersStream(),
                 builder: (context, snap) {
-                  if (!snap.hasData)
+                  if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
+                  }
                   final docs = snap.data!.docs;
                   return ListView.builder(
                     itemCount: docs.length,

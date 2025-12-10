@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uas_mcc/services/firestore_service.dart';
 import 'package:uas_mcc/widgets/bottom_nav.dart';
-import 'package:uas_mcc/screens/profile_screen.dart';
+import 'package:uas_mcc/screens/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -25,8 +25,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       StreamBuilder<QuerySnapshot>(
         stream: db.newsStream(),
         builder: (context, snap) {
-          if (!snap.hasData)
+          if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
           final docs = snap.data!.docs;
           return ListView.builder(
             itemCount: docs.length,
