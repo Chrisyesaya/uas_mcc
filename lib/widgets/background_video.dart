@@ -53,9 +53,7 @@ class _BackgroundVideoState extends State<BackgroundVideo> {
             ),
           ),
 
-          Container(
-            color: Colors.black.withValues(alpha: widget.darkOpacity),
-          ),
+          Container(color: Colors.black.withValues(alpha: widget.darkOpacity)),
         ],
       ),
     );

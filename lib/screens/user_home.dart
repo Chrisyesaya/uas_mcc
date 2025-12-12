@@ -34,142 +34,178 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     final isAdmin = widget.isAdmin;
 
     Widget adminHome() => SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      const Text('Add News', style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextField(
-                        controller: _newsTitleCtrl,
-                        decoration: const InputDecoration(labelText: 'Title'),
-                      ),
-                      TextField(
-                        controller: _newsBodyCtrl,
-                        decoration: const InputDecoration(labelText: 'Body'),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          final title = _newsTitleCtrl.text.trim();
-                          final body = _newsBodyCtrl.text.trim();
-                          if (title.isEmpty) return;
-                          await db.addNews(title, body);
-                          _newsTitleCtrl.clear();
-                          _newsBodyCtrl.clear();
-                          if (!mounted) return;
-                          messenger.showSnackBar(const SnackBar(content: Text('News published')));
-                        },
-                        child: const Text('Publish'),
-                      ),
-                    ],
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  const Text(
+                    'Add News',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
+                  TextField(
+                    controller: _newsTitleCtrl,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                  ),
+                  TextField(
+                    controller: _newsBodyCtrl,
+                    decoration: const InputDecoration(labelText: 'Body'),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final title = _newsTitleCtrl.text.trim();
+                      final body = _newsBodyCtrl.text.trim();
+                      if (title.isEmpty) return;
+                      await db.addNews(title, body);
+                      _newsTitleCtrl.clear();
+                      _newsBodyCtrl.clear();
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('News published')),
+                      );
+                    },
+                    child: const Text('Publish'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      const Text('Membership Plans', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 140,
-                        child: StreamBuilder<QuerySnapshot>(
-                          stream: db.plansStream(),
-                          builder: (context, snap) {
-                            if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-                            final docs = snap.data!.docs;
-                            return ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, i) {
-                                final d = docs[i];
-                                final planId = d.id;
-                                final benefits = (d.data() as Map<String, dynamic>)['benefits'] ?? {};
-                                return ListTile(
-                                  title: Text(planId),
-                                  subtitle: Text((benefits as Map).keys.join(', ')),
-                                  onTap: () => _showEditPlan(context, db, planId, Map<String, dynamic>.from(benefits)),
-                                );
-                              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  const Text(
+                    'Membership Plans',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 140,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: db.plansStream(),
+                      builder: (context, snap) {
+                        if (!snap.hasData)
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        final docs = snap.data!.docs;
+                        return ListView.builder(
+                          itemCount: docs.length,
+                          itemBuilder: (context, i) {
+                            final d = docs[i];
+                            final planId = d.id;
+                            final benefits =
+                                (d.data()
+                                    as Map<String, dynamic>)['benefits'] ??
+                                {};
+                            return ListTile(
+                              title: Text(planId),
+                              subtitle: Text((benefits as Map).keys.join(', ')),
+                              onTap: () => _showEditPlan(
+                                context,
+                                db,
+                                planId,
+                                Map<String, dynamic>.from(benefits),
+                              ),
                             );
                           },
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(height: 12),
-              // Users list with membership
-              StreamBuilder<QuerySnapshot>(
-                stream: db.usersStream(),
-                builder: (context, snap) {
-                  if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-                  final docs = snap.data!.docs;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: docs.length,
-                    itemBuilder: (context, i) {
-                      final d = docs[i];
-                      final uid = d.id;
-                      final email = d['email'] ?? '';
-                      return FutureBuilder<DocumentSnapshot?>(
-                        future: db.getMembership(uid),
-                        builder: (context, mSnap) {
-                          String membershipText = 'No membership';
-                          if (mSnap.connectionState == ConnectionState.waiting) {
-                            membershipText = 'Loading...';
-                          } else if (mSnap.hasData && mSnap.data != null && mSnap.data!.exists) {
-                            final md = mSnap.data!;
-                            final mdData = (md.data() as Map<String, dynamic>?) ?? {};
-                            membershipText = '${mdData['plan'] ?? 'Unknown'} · ${mdData['status'] ?? ''}';
-                          }
-                          return ListTile(
-                            title: Text(email),
-                            subtitle: Text('Role: ${d['role'] ?? 'user'} — $membershipText'),
-                            trailing: PopupMenuButton<String>(
-                              onSelected: (v) async {
-                                if (v == 'cancel') await db.cancelMembership(uid);
-                              },
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(value: 'cancel', child: Text('Cancel Membership')),
-                              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Users list with membership
+          StreamBuilder<QuerySnapshot>(
+            stream: db.usersStream(),
+            builder: (context, snap) {
+              if (!snap.hasData)
+                return const Center(child: CircularProgressIndicator());
+              final docs = snap.data!.docs;
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: docs.length,
+                itemBuilder: (context, i) {
+                  final d = docs[i];
+                  final uid = d.id;
+                  final email = d['email'] ?? '';
+                  return FutureBuilder<DocumentSnapshot?>(
+                    future: db.getMembership(uid),
+                    builder: (context, mSnap) {
+                      String membershipText = 'No membership';
+                      if (mSnap.connectionState == ConnectionState.waiting) {
+                        membershipText = 'Loading...';
+                      } else if (mSnap.hasData &&
+                          mSnap.data != null &&
+                          mSnap.data!.exists) {
+                        final md = mSnap.data!;
+                        final mdData =
+                            (md.data() as Map<String, dynamic>?) ?? {};
+                        membershipText =
+                            '${mdData['plan'] ?? 'Unknown'} · ${mdData['status'] ?? ''}';
+                      }
+                      return ListTile(
+                        title: Text(email),
+                        subtitle: Text(
+                          'Role: ${d['role'] ?? 'user'} — $membershipText',
+                        ),
+                        trailing: PopupMenuButton<String>(
+                          onSelected: (v) async {
+                            if (v == 'cancel') await db.cancelMembership(uid);
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: 'cancel',
+                              child: Text('Cancel Membership'),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       );
                     },
                   );
                 },
-              ),
-            ],
+              );
+            },
           ),
-        );
+        ],
+      ),
+    );
 
     final pages = [
       // first tab: either news feed or admin dashboard
-      if (isAdmin) adminHome() else StreamBuilder<QuerySnapshot>(
-        stream: db.newsStream(),
-        builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          final docs = snap.data!.docs;
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, i) {
-              final d = docs[i];
-              return ListTile(title: Text(d['title'] ?? ''), subtitle: Text(d['body'] ?? ''));
-            },
-          );
-        },
-      ),
+      if (isAdmin)
+        adminHome()
+      else
+        StreamBuilder<QuerySnapshot>(
+          stream: db.newsStream(),
+          builder: (context, snap) {
+            if (!snap.hasData)
+              return const Center(child: CircularProgressIndicator());
+            final docs = snap.data!.docs;
+            return ListView.builder(
+              itemCount: docs.length,
+              itemBuilder: (context, i) {
+                final d = docs[i];
+                return ListTile(
+                  title: Text(d['title'] ?? ''),
+                  subtitle: Text(d['body'] ?? ''),
+                );
+              },
+            );
+          },
+        ),
       // Membership status / Booking (unchanged)
       Padding(
         padding: const EdgeInsets.all(16),
@@ -208,25 +244,35 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       FutureBuilder<Map<String, dynamic>?>(
                         future: db.getPlanBenefits(plan),
                         builder: (context, bSnap) {
-                          if (bSnap.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                          if (bSnap.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
                           final benefits = bSnap.data;
                           if (benefits == null || benefits.isEmpty) {
-                            return const Text('No benefits configured for this plan.');
+                            return const Text(
+                              'No benefits configured for this plan.',
+                            );
                           }
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Benefits:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const Text(
+                                'Benefits:',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                               const SizedBox(height: 8),
-                              ...benefits.keys.map((k) => Row(
-                                    children: [
-                                      const Icon(Icons.check, size: 16),
-                                      const SizedBox(width: 8),
-                                      Text(k),
-                                    ],
-                                  )),
+                              ...benefits.keys.map(
+                                (k) => Row(
+                                  children: [
+                                    const Icon(Icons.check, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(k),
+                                  ],
+                                ),
+                              ),
                             ],
                           );
                         },
