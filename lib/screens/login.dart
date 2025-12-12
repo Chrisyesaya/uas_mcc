@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:uas_mcc/services/auth_service.dart';
 import 'package:uas_mcc/services/firestore_service.dart';
 import 'package:uas_mcc/widgets/background_video.dart';
-import 'register_user.dart';
+import 'user_register.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

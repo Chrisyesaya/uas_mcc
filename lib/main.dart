@@ -7,7 +7,6 @@ import 'package:uas_mcc/services/theme_provider.dart';
 import 'package:uas_mcc/screens/login.dart';
 // screen imports are loaded lazily by routers/screens when needed
 import 'package:uas_mcc/screens/user_home.dart';
-import 'package:uas_mcc/screens/admin_dashboard.dart';
 // profile screen imported where used
 import 'firebase_options.dart';
 
@@ -79,7 +78,7 @@ class _AuthGateState extends State<AuthGate> {
               );
             }
             final role = roleSnap.data ?? 'user';
-            if (role == 'admin') return const AdminDashboardScreen();
+            if (role == 'admin') return const UserHomeScreen(isAdmin: true);
             return const UserHomeScreen();
           },
         );

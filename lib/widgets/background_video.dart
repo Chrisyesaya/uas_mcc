@@ -8,7 +8,7 @@ class BackgroundVideo extends StatefulWidget {
   const BackgroundVideo({
     super.key,
     required this.assetPath,
-    this.darkOpacity = 0.4,
+    this.darkOpacity = 0.5,
   });
 
   @override
@@ -54,7 +54,7 @@ class _BackgroundVideoState extends State<BackgroundVideo> {
           ),
 
           Container(
-            color: Colors.black.withOpacity(widget.darkOpacity),
+            color: Colors.black.withValues(alpha: widget.darkOpacity),
           ),
         ],
       ),
