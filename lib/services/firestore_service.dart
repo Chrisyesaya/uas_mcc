@@ -35,14 +35,32 @@ class FirestoreService {
       'status': 'pending',
       'startedAt': FieldValue.serverTimestamp(),
     });
+    // Denormalize: store membership summary on the user's document for faster reads
+    await _db.collection('users').doc(uid).set({
+      'membershipPlan': plan,
+      'membershipStatus': 'pending',
+      'membershipUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<DocumentSnapshot?> getMembership(String uid) async {
-    final doc = await _db.collection('memberships').doc(uid).get();
-    return doc.exists ? doc : null;
+    try {
+      final doc = await _db.collection('memberships').doc(uid).get();
+      return doc.exists ? doc : null;
+    } on FirebaseException catch (_) {
+      // Fallback to cache if offline
+      final doc = await _db
+          .collection('memberships')
+          .doc(uid)
+          .get(GetOptions(source: Source.cache));
+      return doc.exists ? doc : null;
+    }
   }
 
   Stream<QuerySnapshot> usersStream() => _db.collection('users').snapshots();
+
+  Stream<QuerySnapshot> membershipsStream() =>
+      _db.collection('memberships').snapshots();
 
   Future<void> updateMembershipBenefits(
     String plan,
@@ -66,6 +84,27 @@ class FirestoreService {
     await _db.collection('memberships').doc(uid).update({
       'status': 'cancelled',
     });
+    // Keep users doc denormalized state in sync
+    await _db.collection('users').doc(uid).set({
+      'membershipStatus': 'cancelled',
+      'membershipUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Fetch a page of users ordered by `createdAt`. If [startAfter] is provided,
+  /// the query will start after that document (useful for pagination).
+  Future<QuerySnapshot> fetchUsersPage({
+    DocumentSnapshot? startAfter,
+    int limit = 20,
+  }) async {
+    var q = _db.collection('users').orderBy('createdAt');
+    if (startAfter != null) q = q.startAfterDocument(startAfter);
+    try {
+      return await q.limit(limit).get();
+    } on FirebaseException catch (_) {
+      // If offline, try to read from cache
+      return await q.limit(limit).get(const GetOptions(source: Source.cache));
+    }
   }
 
   // Save account data to "accounts" parent collection

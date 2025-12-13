@@ -180,7 +180,8 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                       );
                                     }
-                                    setState(() => _loading = false);
+                                    if (mounted)
+                                      setState(() => _loading = false);
                                   },
                             icon: _loading
                                 ? const SizedBox(
@@ -239,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                   );
                                 }
-                                setState(() => _loading = false);
+                                if (mounted) setState(() => _loading = false);
                               },
                             ),
                           ),
@@ -322,12 +323,15 @@ class _LoginScreenState extends State<LoginScreen>
               size: 18,
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[600],
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],

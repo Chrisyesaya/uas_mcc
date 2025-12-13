@@ -18,6 +18,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   int _index = 0;
   final TextEditingController _newsTitleCtrl = TextEditingController();
   final TextEditingController _newsBodyCtrl = TextEditingController();
+  // Pagination state for admin user list
+  final List<DocumentSnapshot> _pagedUsers = [];
+  DocumentSnapshot? _lastUserDoc;
+  bool _loadingUsers = false;
+  bool _hasMoreUsers = true;
+  final int _usersPageSize = 20;
 
   @override
   void dispose() {
@@ -92,10 +98,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     child: StreamBuilder<QuerySnapshot>(
                       stream: db.plansStream(),
                       builder: (context, snap) {
-                        if (!snap.hasData)
+                        if (!snap.hasData) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
+                        }
                         final docs = snap.data!.docs;
                         return ListView.builder(
                           itemCount: docs.length,
@@ -126,36 +133,32 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // Users list with membership
+          // Users list with membership — use a single memberships stream to avoid per-item network calls
           StreamBuilder<QuerySnapshot>(
             stream: db.usersStream(),
-            builder: (context, snap) {
-              if (!snap.hasData)
+            builder: (context, usersSnap) {
+              if (!usersSnap.hasData) {
                 return const Center(child: CircularProgressIndicator());
-              final docs = snap.data!.docs;
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: docs.length,
-                itemBuilder: (context, i) {
-                  final d = docs[i];
-                  final uid = d.id;
-                  final email = d['email'] ?? '';
-                  return FutureBuilder<DocumentSnapshot?>(
-                    future: db.getMembership(uid),
-                    builder: (context, mSnap) {
-                      String membershipText = 'No membership';
-                      if (mSnap.connectionState == ConnectionState.waiting) {
-                        membershipText = 'Loading...';
-                      } else if (mSnap.hasData &&
-                          mSnap.data != null &&
-                          mSnap.data!.exists) {
-                        final md = mSnap.data!;
-                        final mdData =
-                            (md.data() as Map<String, dynamic>?) ?? {};
-                        membershipText =
-                            '${mdData['plan'] ?? 'Unknown'} · ${mdData['status'] ?? ''}';
-                      }
+              }
+              // Paginated users list — load initial page if empty
+              if (_pagedUsers.isEmpty && _hasMoreUsers && !_loadingUsers) {
+                _loadMoreUsers(db);
+              }
+              return Column(
+                children: [
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _pagedUsers.length,
+                    itemBuilder: (context, i) {
+                      final d = _pagedUsers[i];
+                      final uid = d.id;
+                      final email = d['email'] ?? '';
+                      final plan = d['membershipPlan'];
+                      final status = d['membershipStatus'];
+                      final membershipText = plan == null
+                          ? 'No membership'
+                          : '$plan · ${status ?? ''}';
                       return ListTile(
                         title: Text(email),
                         subtitle: Text(
@@ -174,8 +177,21 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       );
                     },
-                  );
-                },
+                  ),
+                  if (_loadingUsers)
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  if (!_loadingUsers && _hasMoreUsers)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () => _loadMoreUsers(db),
+                        child: const Text('Load more users'),
+                      ),
+                    ),
+                ],
               );
             },
           ),
@@ -191,8 +207,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         StreamBuilder<QuerySnapshot>(
           stream: db.newsStream(),
           builder: (context, snap) {
-            if (!snap.hasData)
+            if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
+            }
             final docs = snap.data!.docs;
             return ListView.builder(
               itemCount: docs.length,
@@ -303,6 +320,29 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             )
           : null,
     );
+  }
+
+  Future<void> _loadMoreUsers(FirestoreService db) async {
+    if (!mounted) return;
+    if (_loadingUsers || !_hasMoreUsers) return;
+    setState(() => _loadingUsers = true);
+    try {
+      final snap = await db.fetchUsersPage(
+        startAfter: _lastUserDoc,
+        limit: _usersPageSize,
+      );
+      if (snap.docs.isNotEmpty) {
+        _pagedUsers.addAll(snap.docs);
+        _lastUserDoc = snap.docs.last;
+        if (snap.docs.length < _usersPageSize) _hasMoreUsers = false;
+      } else {
+        _hasMoreUsers = false;
+      }
+    } catch (_) {
+      // ignore errors for now
+    }
+    if (!mounted) return;
+    setState(() => _loadingUsers = false);
   }
 
   void _showEditPlan(
